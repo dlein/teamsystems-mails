@@ -10,11 +10,23 @@ Extract email addresses from Teamsystems Excel exports.
 
 #### Linux
 
+> **Note:** You may need to make the binary executable first:
+>
+> ```sh
+> chmod +x ./teamsystems-mails-linux
+> ```
+
 ```
 ./teamsystems-mails-linux <path-to-xlsx-or-xls-file>
 ```
 
 #### macOS
+
+> **Note:** You may need to make the binary executable first:
+>
+> ```sh
+> chmod +x ./teamsystems-mails-macos
+> ```
 
 ```
 ./teamsystems-mails-macos <path-to-xlsx-or-xls-file>
