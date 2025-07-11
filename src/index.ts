@@ -17,16 +17,16 @@ const readEmailsFromTeamsystemsExport = (filePath: string): string[] => {
       emails.push(
         ...String(cell)
           // When there is more that one email address in a cell
-          // they are separated by newlines and we split them
+          // they are separated by newline and we split them
           .split(/\r?\n/)
-          // There a optional comments in the email address that are separated by spaces,
-          // so we discard everything after the first space
+          // There is an optional comment after the email address separated
+          // by space, so we discard everything after the first whitespace
           .map((s) => s.split(/\s+/)[0])
           // Trim whitespace before and after the email address
           .map((s) => s.trim())
-          // Convert to lowercase, so safely remove duplicates later
+          // Convert to lowercase, to safely remove duplicates later
           .map((s) => s.toLowerCase())
-          // Remove what not looks like valid email addresses
+          // Remove what not looks like a valid email addresses
           .filter((s) => EMAIL_REGEX.test(s)),
       );
     }
@@ -35,33 +35,42 @@ const readEmailsFromTeamsystemsExport = (filePath: string): string[] => {
   return Array.from(new Set(emails)).sort();
 };
 
-function printUsageAndExit(): never {
-  console.error(`Usage examples:`);
-  if (process.platform === "linux") {
-    console.error(`  ./teamsystems-mails-linux <path-to-xlsx-or-xls-file>`);
-  } else if (process.platform === "win32") {
-    console.error(`  .\\teamsystems-mails-win.exe <path-to-xlsx-or-xls-file>`);
-  } else if (process.platform === "darwin") {
-    console.error(`  ./teamsystems-mails-macos <path-to-xlsx-or-xls-file>`);
+const printUsageAndExit = (): never => {
+  console.error(`Usage:`);
+  if (isBinaryBuild()) {
+    if (process.platform === "linux") {
+      console.error(`  ./teamsystems-mails-linux <path-to-xlsx-or-xls-file>`);
+    } else if (process.platform === "win32") {
+      console.error(
+        `  .\\teamsystems-mails-win.exe <path-to-xlsx-or-xls-file>`,
+      );
+    } else if (process.platform === "darwin") {
+      console.error(`  ./teamsystems-mails-macos <path-to-xlsx-or-xls-file>`);
+    }
+  } else {
+    console.error(`  yarn dev <path-to-xlsx-or-xls-file>`);
   }
-  console.error(`  yarn dev <path-to-xlsx-or-xls-file>`);
-  console.error(`  node dist/index.js <path-to-xlsx-or-xls-file>`);
   process.exit(1);
-}
+};
 
-function checkFileExists(filePath: string): void {
+const checkFileExists = (filePath: string): void => {
   if (!fs.existsSync(filePath)) {
     console.error(`File not found: ${filePath}`);
     process.exit(1);
   }
-}
+};
 
-function checkFileExtension(filePath: string): void {
+const checkFileExtension = (filePath: string): void => {
   if (!filePath.endsWith(".xlsx") && !filePath.endsWith(".xls")) {
     console.error("Only .xlsx and .xls files are supported.");
     process.exit(1);
   }
-}
+};
+
+const isBinaryBuild = (): boolean => {
+  // Hack provided by GPT-4.1 ...
+  return typeof (process as unknown as { pkg?: unknown }).pkg !== "undefined";
+};
 
 const main = (): void => {
   const args = process.argv.slice(2);
