@@ -16,10 +16,17 @@ const readEmailsFromTeamsystemsExport = (filePath: string): string[] => {
     if (cell) {
       emails.push(
         ...String(cell)
+          // When there is more that one email address in a cell
+          // they are separated by newlines and we split them
           .split(/\r?\n/)
+          // There a optional comments in the email address that are separated by spaces,
+          // so we discard everything after the first space
           .map((s) => s.split(/\s+/)[0])
+          // Trim whitespace before and after the email address
           .map((s) => s.trim())
+          // Convert to lowercase, so safely remove duplicates later
           .map((s) => s.toLowerCase())
+          // Remove what not looks like valid email addresses
           .filter((s) => EMAIL_REGEX.test(s)),
       );
     }
