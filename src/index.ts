@@ -1,51 +1,72 @@
-import ExcelJS from "exceljs";
 import fs from "fs";
 import path from "path";
+import xlsx from "xlsx";
 
-const EMAIL_COLUMN_INDEX = 10; // Column J is the 10th column and holds the email addresses
+const EMAIL_COLUMN_INDEX = 9; // Column J holds the email addresses
 const EMAIL_REGEX = /.+@.+\..+/; // Basic regex to validate email format
 
-const readEmailsFromTeamsystemsXlsx = async (
-  filePath: string,
-): Promise<string[]> => {
-  const workbook = new ExcelJS.Workbook();
-  await workbook.xlsx.readFile(filePath);
-  const worksheet = workbook.worksheets[0];
-
+const readEmailsFromTeamsystemsExport = (filePath: string): string[] => {
   const emails: string[] = [];
-  worksheet.eachRow((row) => {
-    const cell = row.getCell(EMAIL_COLUMN_INDEX).value as string;
+  const wb = xlsx.readFile(filePath);
+  const ws = wb.Sheets[wb.SheetNames[0]];
+  // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
+  const rows = xlsx.utils.sheet_to_json(ws, { header: 1 }) as string[][];
+  for (const row of rows) {
+    const cell = row[EMAIL_COLUMN_INDEX];
     if (cell) {
       emails.push(
         ...String(cell)
-          .split(/\r?\n/) // Split by newlines
-          .map((s) => s.split(/\s+/)[0]) // Remove everything after the first whitespace
-          .map((s) => s.trim()) // Remove leading and trailing whitespace
-          .map((s) => s.toLowerCase()) // Convert to lowercase
-          .filter((s) => EMAIL_REGEX.test(s)), // Remove obviously invalid email formats
+          .split(/\r?\n/)
+          .map((s) => s.split(/\s+/)[0])
+          .map((s) => s.trim())
+          .map((s) => s.toLowerCase())
+          .filter((s) => EMAIL_REGEX.test(s)),
       );
     }
-  });
+  }
   // Remove duplicates and sort
   return Array.from(new Set(emails)).sort();
 };
 
-const main = async (): Promise<void> => {
-  const args = process.argv.slice(2);
-  if (args.length === 0) {
-    console.error("Usage: node dist/index.js <path-to-xlsx-file>");
-    process.exit(1);
+function printUsageAndExit(): never {
+  console.error(`Usage examples:`);
+  if (process.platform === "linux") {
+    console.error(`  ./teamsystems-mails-linux <path-to-xlsx-or-xls-file>`);
+  } else if (process.platform === "win32") {
+    console.error(`  .\\teamsystems-mails-win.exe <path-to-xlsx-or-xls-file>`);
+  } else if (process.platform === "darwin") {
+    console.error(`  ./teamsystems-mails-macos <path-to-xlsx-or-xls-file>`);
   }
-  const filePath = args[0];
+  console.error(`  yarn dev <path-to-xlsx-or-xls-file>`);
+  console.error(`  node dist/index.js <path-to-xlsx-or-xls-file>`);
+  process.exit(1);
+}
+
+function checkFileExists(filePath: string): void {
   if (!fs.existsSync(filePath)) {
     console.error(`File not found: ${filePath}`);
     process.exit(1);
   }
-  if (!filePath.endsWith(".xlsx")) {
-    console.error("Only .xlsx files are supported.");
+}
+
+function checkFileExtension(filePath: string): void {
+  if (!filePath.endsWith(".xlsx") && !filePath.endsWith(".xls")) {
+    console.error("Only .xlsx and .xls files are supported.");
     process.exit(1);
   }
-  const emails = await readEmailsFromTeamsystemsXlsx(filePath);
+}
+
+const main = (): void => {
+  const args = process.argv.slice(2);
+  if (args.length === 0) {
+    printUsageAndExit();
+  }
+  const filePath = args[0];
+  checkFileExists(filePath);
+  checkFileExtension(filePath);
+
+  const emails = readEmailsFromTeamsystemsExport(filePath);
+
   if (emails.length === 0) {
     console.log("No emails found in the file.");
     return;
@@ -58,6 +79,4 @@ const main = async (): Promise<void> => {
   console.log(`Wrote ${String(emails.length)} emails to ${outFile}`);
 };
 
-main().catch((err: unknown) => {
-  console.error("Error in main:", err);
-});
+main();
