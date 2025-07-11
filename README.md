@@ -1,8 +1,17 @@
 # teamsystems-mails
 
-Extract email addresses from Teamsystems Excel exports.
+Extract email addresses from the Teamsystems Excel export.
 
 ## Usage
+
+### Downloading the Excel file
+
+You need sufficient permissions to download the Excel file from Teamsystems!
+
+1. Log in to your Teamsystems instance
+2. Navigate to "Allgemein" -> "Personen verwalten"
+3. Click the "Export" button
+4. Find the file in yours browser's download folder
 
 ### Using the binaries
 
